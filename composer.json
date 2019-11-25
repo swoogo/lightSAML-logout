@@ -1,5 +1,5 @@
 {
-    "name": "lightsaml/lightsaml-logout",
+    "name": "swoogo/lightsaml-logout",
     "license": "GPL-3.0+",
     "type": "library",
     "description": "Light SAML2 logout php library",
