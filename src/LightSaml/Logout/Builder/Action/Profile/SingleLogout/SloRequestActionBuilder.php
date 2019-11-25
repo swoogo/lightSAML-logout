@@ -11,16 +11,16 @@
 
 namespace LightSaml\Logout\Builder\Action\Profile\SingleLogout;
 
+use LightSaml\Action\DispatchEventAction;
 use LightSaml\Action\Profile\Outbound\Message\CreateMessageIssuerAction;
 use LightSaml\Action\Profile\Outbound\Message\DestinationAction;
 use LightSaml\Action\Profile\Outbound\Message\ResolveEndpointSloAction;
-use LightSaml\Action\Profile\Outbound\Message\SaveRequestStateAction;
+use LightSaml\Event\Events;
 use LightSaml\Logout\Action\Profile\Outbound\LogoutRequest\CreateLogoutRequestAction;
 use LightSaml\Logout\Action\Profile\Outbound\LogoutRequest\LogoutResolveAction;
 use LightSaml\Logout\Action\Profile\Outbound\LogoutRequest\ResolveLogoutPartyAction;
 use LightSaml\Logout\Action\Profile\Outbound\LogoutRequest\SetNameIdAction;
 use LightSaml\Logout\Action\Profile\Outbound\LogoutRequest\SetNotOnOrAfterAction;
-use LightSaml\Logout\Action\Profile\Outbound\LogoutRequest\SetSessionIndexAction;
 use LightSaml\Action\Profile\Outbound\Message\MessageIdAction;
 use LightSaml\Action\Profile\Outbound\Message\MessageIssueInstantAction;
 use LightSaml\Action\Profile\Outbound\Message\MessageVersionAction;
@@ -29,9 +29,13 @@ use LightSaml\Action\Profile\Outbound\Message\SignMessageAction;
 use LightSaml\Builder\Action\CompositeActionBuilder;
 use LightSaml\Builder\Action\Profile\AbstractProfileActionBuilder;
 use LightSaml\SamlConstants;
+use Saml\Action\Sso\SetSessionIdxAction;
 
 class SloRequestActionBuilder extends AbstractProfileActionBuilder
 {
+    /**
+     * @return void
+     */
     protected function doInitialize()
     {
         $proceedActionBuilder = new CompositeActionBuilder();
@@ -68,7 +72,7 @@ class SloRequestActionBuilder extends AbstractProfileActionBuilder
         $proceedActionBuilder->add(new SetNameIdAction(
             $this->buildContainer->getSystemContainer()->getLogger()
         ));
-        $proceedActionBuilder->add(new SetSessionIndexAction(
+        $proceedActionBuilder->add(new SetSessionIdxAction(
             $this->buildContainer->getSystemContainer()->getLogger()
         ));
         $proceedActionBuilder->add(new SetNotOnOrAfterAction(
@@ -76,11 +80,10 @@ class SloRequestActionBuilder extends AbstractProfileActionBuilder
             $this->buildContainer->getSystemContainer()->getTimeProvider(),
             120
         ));
-        $proceedActionBuilder->add(new SaveRequestStateAction(
-            $this->buildContainer->getSystemContainer()->getLogger(),
-            $this->buildContainer->getStoreContainer()->getRequestStateStore()
+        $proceedActionBuilder->add(new DispatchEventAction(
+            $this->buildContainer->getSystemContainer()->getEventDispatcher(),
+            Events::BEFORE_ENCRYPT
         ));
-
         $proceedActionBuilder->add(new SignMessageAction(
             $this->buildContainer->getSystemContainer()->getLogger(),
             $this->buildContainer->getServiceContainer()->getSignatureResolver()
